@@ -1,0 +1,9 @@
+test_float: 1.1
+test_int: 12
+test_string: hello!
+test_bool: true
+# test_list:
+#   - first
+#   - second
+# test_map:
+#   key: "value"

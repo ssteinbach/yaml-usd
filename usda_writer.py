@@ -3,9 +3,9 @@
 # python
 import argparse
 import os
+import functools
 
-# local
-import tilt_extract
+import yaml
 
 """ Convert YAML to/from USD """
 
@@ -61,31 +61,85 @@ CURVE_TEMPLATE = """
         uniform token[] xformOpOrder = ["xformOp:transform"]
     }}"""
 
+INT_TEMPLATE = "int {key} = {val}"
+FLOAT_TEMPLATE = "float {key} = {val}"
+STRING_TEMPLATE = 'token {key} = "{val}"'
+
+
+TO_USDA_DISPATCH_TABLE = {
+}
+
+
+def usda_dispatch_for(typeobj):
+    def wrapped_for_type(fn):
+        TO_USDA_DISPATCH_TABLE[typeobj] = fn
+        return fn
+    return wrapped_for_type
+
+
+@usda_dispatch_for(int)
+def write_int(key, val):
+    return INT_TEMPLATE.format(key=key, val=val)
+
+
+@usda_dispatch_for(float)
+def write_float(key, val):
+    return FLOAT_TEMPLATE.format(key=key, val=val)
+
+
+@usda_dispatch_for(str)
+def write_string(key, val):
+    return STRING_TEMPLATE.format(key=key, val=val)
+
 
 def to_usda(tb_data):
     body = ""
 
-    for i, stroke in enumerate(tb_data['strokes']):
-        cp_positions = [
-            tuple(cp['position']) for cp in stroke['control_points']
-        ]
-        stroke_data = {
-            'name': 'tiltbrush_stroke_{}'.format(i),
-            'width': stroke['brush_size'],
-            'color': tuple(stroke['brush_color'][0:3]),
-            'nverts': len(cp_positions),
-            'points': cp_positions,
-        }
-        min_p = list(cp_positions[0])
-        max_p = list(cp_positions[1])
-        for p in cp_positions[1:]:
-            for dim in range(3):
-                min_p[dim] = min(min_p[dim], p[dim])
-                max_p[dim] = max(max_p[dim], p[dim])
-        stroke_data['min_e'] = tuple(min_p)
-        stroke_data['max_e'] = tuple(max_p)
+    try:
+        items = tb_data.items()
+    except AttributeError:
+        raise ValueError(
+            "Got '{}', expected dictionary like object.  Object: {}".format(
+                type(tb_data),
+                tb_data
+            )
+        )
 
-        body += CURVE_TEMPLATE.format(**stroke_data)
+    for key, val in items:
+        try:
+            body += TO_USDA_DISPATCH_TABLE[type(val)](key, val)
+        except KeyError:
+            raise ValueError(
+                "'{}' data is unsupported.  Key: {}, Value: {}.  Supported"
+                " types are: {}".format(
+                    type(val),
+                    key,
+                    val,
+                    list(TO_USDA_DISPATCH_TABLE.keys())
+                )
+            )
+
+    # for i, stroke in enumerate(tb_data['strokes']):
+    #     cp_positions = [
+    #         tuple(cp['position']) for cp in stroke['control_points']
+    #     ]
+    #     stroke_data = {
+    #         'name': 'tiltbrush_stroke_{}'.format(i),
+    #         'width': stroke['brush_size'],
+    #         'color': tuple(stroke['brush_color'][0:3]),
+    #         'nverts': len(cp_positions),
+    #         'points': cp_positions,
+    #     }
+    #     min_p = list(cp_positions[0])
+    #     max_p = list(cp_positions[1])
+    #     for p in cp_positions[1:]:
+    #         for dim in range(3):
+    #             min_p[dim] = min(min_p[dim], p[dim])
+    #             max_p[dim] = max(max_p[dim], p[dim])
+    #     stroke_data['min_e'] = tuple(min_p)
+    #     stroke_data['max_e'] = tuple(max_p)
+    #
+    #     body += CURVE_TEMPLATE.format(**stroke_data)
 
     return FILE_TEMPLATE.format(body=body)
 
@@ -98,7 +152,7 @@ def main():
         outpath = "{}.usda".format(os.path.basename(fp))
         print("Attempting to write: {}".format(outpath))
         with open(outpath, 'w') as fo:
-            fo.write(to_usda(tilt_extract.extract(fp)))
+            fo.write(to_usda(yaml.load(fp)))
             print("Success.")
 
 
