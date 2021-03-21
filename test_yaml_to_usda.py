@@ -45,6 +45,12 @@ class TestYaml(unittest.TestCase):
             usda_writer.to_usda({'test': ["asdf", 1]}),
         )
 
+    def test_map(self):
+        self.assertIn(
+            'def Scope "test"',
+            usda_writer.to_usda({'test': {"test_int": 1}}),
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

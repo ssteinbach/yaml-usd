@@ -3,7 +3,6 @@
 # python
 import argparse
 import os
-import functools
 
 import yaml
 
@@ -57,7 +56,7 @@ CURVE_TEMPLATE = """
         ColorFloat[] primvars:displayColor = [{color}]
         uniform token type = "cubic"
         float[] widths = [{width}]
-        custom Matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1) )
+        custom Matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1) ) # noqa E501
         uniform token[] xformOpOrder = ["xformOp:transform"]
     }}"""
 
@@ -71,6 +70,10 @@ INT_TEMPLATE = "int {key} = {val}"
 FLOAT_TEMPLATE = "float {key} = {val}"
 STRING_TEMPLATE = 'token {key} = "{val}"'
 LIST_TEMPLATE = '{ltype}[] {key} = [{values}]'
+SCOPE_TEMPLATE = """def Scope "{name}"
+{{
+body
+}}"""
 
 
 # gets filled in by usda_dispatch_for decorator
@@ -105,12 +108,12 @@ def write_list(key, val):
         list_type = type(val[0])
     else:
         list_type = int
-    
+
     list_type_key = BASIC_TYPE_MAP[list_type]
 
     def string_handler(val):
         return '"{}"'.format(val)
-    
+
     if list_type == str:
         list_type = string_handler
 
@@ -120,20 +123,16 @@ def write_list(key, val):
         values=",".join(list_type(v) for v in val)
     )
 
-def to_usda(tb_data):
+
+@usda_dispatch_for(type({}))
+def write_scope(key, val):
+    return SCOPE_TEMPLATE.format(name=key, body=write_map(val))
+
+
+def write_map(val):
     body = ""
 
-    try:
-        items = tb_data.items()
-    except AttributeError:
-        raise ValueError(
-            "Got '{}', expected dictionary like object.  Object: {}".format(
-                type(tb_data),
-                tb_data
-            )
-        )
-
-    for key, val in items:
+    for key, val in val.items():
         val_type = type(val)
         try:
             body += TO_USDA_DISPATCH_TABLE[val_type](key, val)
@@ -148,29 +147,21 @@ def to_usda(tb_data):
                 )
             )
 
-    # for i, stroke in enumerate(tb_data['strokes']):
-    #     cp_positions = [
-    #         tuple(cp['position']) for cp in stroke['control_points']
-    #     ]
-    #     stroke_data = {
-    #         'name': 'tiltbrush_stroke_{}'.format(i),
-    #         'width': stroke['brush_size'],
-    #         'color': tuple(stroke['brush_color'][0:3]),
-    #         'nverts': len(cp_positions),
-    #         'points': cp_positions,
-    #     }
-    #     min_p = list(cp_positions[0])
-    #     max_p = list(cp_positions[1])
-    #     for p in cp_positions[1:]:
-    #         for dim in range(3):
-    #             min_p[dim] = min(min_p[dim], p[dim])
-    #             max_p[dim] = max(max_p[dim], p[dim])
-    #     stroke_data['min_e'] = tuple(min_p)
-    #     stroke_data['max_e'] = tuple(max_p)
-    #
-    #     body += CURVE_TEMPLATE.format(**stroke_data)
+    return body
 
-    return FILE_TEMPLATE.format(body=body)
+
+def to_usda(tb_data):
+    try:
+        tb_data.items()
+    except AttributeError:
+        raise ValueError(
+            "Got '{}', expected dictionary like object.  Object: {}".format(
+                type(tb_data),
+                tb_data
+            )
+        )
+
+    return FILE_TEMPLATE.format(body=write_map(tb_data))
 
 
 def main():
@@ -181,7 +172,7 @@ def main():
         outpath = "{}.usda".format(os.path.basename(fp))
         print("Attempting to write: {}".format(outpath))
         with open(outpath, 'w') as fo:
-            fo.write(to_usda(yaml.load(fp)))
+            fo.write(to_usda(os.path.basename(fp), yaml.load(fp)))
             print("Success.")
 
 
