@@ -35,14 +35,7 @@ FILE_TEMPLATE = """#usda 1.0
     startFrame = 1
 )
 
-def Scope "World" (
-    customData = {{
-        bool zUp = 0
-    }}
-)
-{{
-    {body}
-}}
+{body}
 """
 
 CURVE_TEMPLATE = """
@@ -72,7 +65,7 @@ STRING_TEMPLATE = 'token {key} = "{val}"'
 LIST_TEMPLATE = '{ltype}[] {key} = [{values}]'
 SCOPE_TEMPLATE = """def Scope "{name}"
 {{
-body
+{body}
 }}"""
 
 
@@ -130,12 +123,12 @@ def write_scope(key, val):
 
 
 def write_map(val):
-    body = ""
+    body = []
 
     for key, val in val.items():
         val_type = type(val)
         try:
-            body += TO_USDA_DISPATCH_TABLE[val_type](key, val)
+            body.append(TO_USDA_DISPATCH_TABLE[val_type](key, val))
         except KeyError:
             raise ValueError(
                 "'{}' data is unsupported.  Key: {}, Value: {}.  Supported"
@@ -147,7 +140,7 @@ def write_map(val):
                 )
             )
 
-    return body
+    return "\n".join(body)
 
 
 def to_usda(tb_data):
@@ -164,15 +157,19 @@ def to_usda(tb_data):
     return FILE_TEMPLATE.format(body=write_map(tb_data))
 
 
-def main():
+def main(files=None):
     """main function for module"""
-    args = parse_args()
+    if not files:
+        args = parse_args()
+        files = args.filepath
 
-    for fp in args.filepath:
+    for fp in files:
         outpath = "{}.usda".format(os.path.basename(fp))
         print("Attempting to write: {}".format(outpath))
         with open(outpath, 'w') as fo:
-            fo.write(to_usda(os.path.basename(fp), yaml.load(fp)))
+            with open(fp) as fi:
+                data = yaml.load(fi.read())
+            fo.write(to_usda(data))
             print("Success.")
 
 

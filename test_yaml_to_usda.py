@@ -45,6 +45,9 @@ class TestYaml(unittest.TestCase):
             usda_writer.to_usda({'test': {"test_int": 1}}),
         )
 
+    def test_commandline(self):
+        usda_writer.main(["test.yml"])
+
 
 if __name__ == '__main__':
     unittest.main()
