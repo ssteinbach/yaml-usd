@@ -35,7 +35,10 @@ FILE_TEMPLATE = """#usda 1.0
     startFrame = 1
 )
 
+def Scope "root"
+{{
 {body}
+}}
 """
 
 CURVE_TEMPLATE = """
