@@ -33,5 +33,18 @@ class TestYaml(unittest.TestCase):
             usda_writer.to_usda({'test': "asdf"}),
         )
 
+    def test_list(self):
+        self.assertIn(
+            'token[] test = ["first","second"]',
+            usda_writer.to_usda({'test': ["first", "second"]}),
+        )
+
+        # test that the first item sets the type for the list
+        self.assertIn(
+            'token[] test = ["asdf","1"]',
+            usda_writer.to_usda({'test': ["asdf", 1]}),
+        )
+
+
 if __name__ == '__main__':
     unittest.main()

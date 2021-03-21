@@ -61,13 +61,20 @@ CURVE_TEMPLATE = """
         uniform token[] xformOpOrder = ["xformOp:transform"]
     }}"""
 
+
+BASIC_TYPE_MAP = {
+    int: "int",
+    float: "float",
+    str: "token",
+}
 INT_TEMPLATE = "int {key} = {val}"
 FLOAT_TEMPLATE = "float {key} = {val}"
 STRING_TEMPLATE = 'token {key} = "{val}"'
+LIST_TEMPLATE = '{ltype}[] {key} = [{values}]'
 
 
-TO_USDA_DISPATCH_TABLE = {
-}
+# gets filled in by usda_dispatch_for decorator
+TO_USDA_DISPATCH_TABLE = {}
 
 
 def usda_dispatch_for(typeobj):
@@ -92,6 +99,27 @@ def write_string(key, val):
     return STRING_TEMPLATE.format(key=key, val=val)
 
 
+@usda_dispatch_for(type([]))
+def write_list(key, val):
+    if val:
+        list_type = type(val[0])
+    else:
+        list_type = int
+    
+    list_type_key = BASIC_TYPE_MAP[list_type]
+
+    def string_handler(val):
+        return '"{}"'.format(val)
+    
+    if list_type == str:
+        list_type = string_handler
+
+    return LIST_TEMPLATE.format(
+        ltype=list_type_key,
+        key=key,
+        values=",".join(list_type(v) for v in val)
+    )
+
 def to_usda(tb_data):
     body = ""
 
@@ -106,13 +134,14 @@ def to_usda(tb_data):
         )
 
     for key, val in items:
+        val_type = type(val)
         try:
-            body += TO_USDA_DISPATCH_TABLE[type(val)](key, val)
+            body += TO_USDA_DISPATCH_TABLE[val_type](key, val)
         except KeyError:
             raise ValueError(
                 "'{}' data is unsupported.  Key: {}, Value: {}.  Supported"
                 " types are: {}".format(
-                    type(val),
+                    val_type,
                     key,
                     val,
                     list(TO_USDA_DISPATCH_TABLE.keys())
