@@ -1,23 +1,33 @@
 #!/usr/bin/env python
 
 # python
-import argparse, os
+import argparse
+import os
 
 # local
 import tilt_extract
 
-"""
-Read .tilt files in and turn them in to usda files w/ curves.
-"""
+""" Convert YAML to/from USD """
+
 
 def parse_args():
     """ parse arguments out of sys.argv """
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-d","--dryrun",action="store_true",default=False,
-                        help="dryrun mode - print what *would* be done")
-    parser.add_argument('filepath', type=str, nargs='+',
-        help='Files that do stuff')
+    parser.add_argument(
+        "-d",
+        "--dryrun",
+        action="store_true",
+        default=False,
+        help="dryrun mode - print what *would* be done"
+    )
+    parser.add_argument(
+        'filepath',
+        type=str,
+        nargs='+',
+        help='YAML files to parse'
+    )
     return parser.parse_args()
+
 
 # USDA TEMPLATE
 FILE_TEMPLATE = """#usda 1.0
@@ -51,16 +61,18 @@ CURVE_TEMPLATE = """
         uniform token[] xformOpOrder = ["xformOp:transform"]
     }}"""
 
-def to_usda(tb_data):
 
+def to_usda(tb_data):
     body = ""
 
     for i, stroke in enumerate(tb_data['strokes']):
-        cp_positions = [tuple(cp['position']) for cp in stroke['control_points']]
+        cp_positions = [
+            tuple(cp['position']) for cp in stroke['control_points']
+        ]
         stroke_data = {
-            'name'  : 'tiltbrush_stroke_{}'.format(i),
-            'width' : stroke['brush_size'],
-            'color' : tuple(stroke['brush_color'][0:3]),
+            'name': 'tiltbrush_stroke_{}'.format(i),
+            'width': stroke['brush_size'],
+            'color': tuple(stroke['brush_color'][0:3]),
             'nverts': len(cp_positions),
             'points': cp_positions,
         }
@@ -77,16 +89,18 @@ def to_usda(tb_data):
 
     return FILE_TEMPLATE.format(body=body)
 
+
 def main():
     """main function for module"""
     args = parse_args()
 
     for fp in args.filepath:
         outpath = "{}.usda".format(os.path.basename(fp))
-        print "Attempting to write: {}".format(outpath)
+        print("Attempting to write: {}".format(outpath))
         with open(outpath, 'w') as fo:
             fo.write(to_usda(tilt_extract.extract(fp)))
-            print "Success."
+            print("Success.")
+
 
 if __name__ == '__main__':
     main()
