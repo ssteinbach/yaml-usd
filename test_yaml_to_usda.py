@@ -15,12 +15,6 @@ class TestYaml(unittest.TestCase):
             usda_writer.to_usda({'test': 12}),
         )
 
-    # def test_bool(self):
-    #     self.assertIn(
-    #         "int test = 12",
-    #         usda_writer.to_usda({'test': 12}),
-    #     )
-
     def test_float(self):
         self.assertIn(
             "float test = 1.0",
