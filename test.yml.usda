@@ -1,18 +1,30 @@
 #usda 1.0
 (
-     endFrame = 1
-     startFrame = 1
+    endFrame = 1
+    startFrame = 1
 )
 
 def Scope "root"
 {
     float test_float = 1.1
     int test_int = 12
+    token[] test_list = ["first", "second"]
     token test_string = "hello!"
-    token[] test_list = ["first","second"]
 
     def Scope "test_map"
     {
         token key = "value"
+
+        def Scope "nested_map"
+        {
+            float offset = 1.1
+            int[] other_thing = [3, 5, 6]
+
+            def Scope "very_nested_map"
+            {
+                token name = "here"
+            }
+        }
     }
 }
+

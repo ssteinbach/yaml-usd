@@ -39,6 +39,12 @@ class TestYaml(unittest.TestCase):
             usda_writer.to_usda({'test': ["asdf", 1]}),
         )
 
+        # test non-string lists
+        self.assertIn(
+            'int[] test = [1,2,3,4]',
+            usda_writer.to_usda({'test': [1, 2, 3, 4]}),
+        )
+
     def test_map(self):
         self.assertIn(
             'def Scope "test"',

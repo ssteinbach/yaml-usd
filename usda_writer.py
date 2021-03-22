@@ -116,7 +116,7 @@ def write_list(key, val):
     return LIST_TEMPLATE.format(
         ltype=list_type_key,
         key=key,
-        values=",".join(list_type(v) for v in val)
+        values=",".join(str(list_type(v)) for v in val)
     )
 
 
