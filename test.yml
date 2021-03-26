@@ -1,6 +1,6 @@
 test_float: 1.1
 test_int: 12
-test_string: hello!
+test_string: "hello!"
 test_list:
   - first
   - second
