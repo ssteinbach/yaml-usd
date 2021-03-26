@@ -6,24 +6,35 @@
 
 def Scope "root"
 {
-    float test_float = 1.1
-    int test_int = 12
-    token[] test_list = ["first", "second"]
-    token test_string = "hello!"
-
-    def Scope "test_map"
-    {
-        token key = "value"
-
-        def Scope "nested_map"
-        {
-            float offset = 1.1
-            int[] other_thing = [3, 5, 6]
-
-            def Scope "very_nested_map"
-            {
-                token name = "here"
-            }
-        }
-    }
+float test_float = 1.1
+int test_int = 12
+token test_string = "hello!"
+token[] test_list = ["first","second"]
+def Scope "test_map"
+{
+token key = "value"
+def Scope "nested_map"
+{
+float offset = 1.1
+int[] other_thing = [3,5,6]
+def Scope "very_nested_map"
+{
+token name = "here"
+}
+}
+def Scope "child_stuff_child_0"
+{
+float test_float_thing = 1.5
+token other_thing = "hello"
+}
+def Scope "child_stuff_child_1"
+{
+int val_thin = 6
+def Scope "child"
+{
+token stuff = "blarg"
+token stuff_two = "blarger"
+}
+}
+}
 }

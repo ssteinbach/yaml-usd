@@ -98,6 +98,15 @@ def write_string(key, val):
     return STRING_TEMPLATE.format(key=key, val=val)
 
 
+def write_list_of_maps(key, val):
+    body = []
+
+    for i, child_prim in enumerate(val):
+        body.append(write_scope("{}_child_{}".format(key, i), child_prim))
+
+    return "\n".join(body)
+
+
 @usda_dispatch_for(type([]))
 def write_list(key, val):
     if val:
@@ -105,7 +114,11 @@ def write_list(key, val):
     else:
         list_type = int
 
-    list_type_key = BASIC_TYPE_MAP[list_type]
+    try:
+        list_type_key = BASIC_TYPE_MAP[list_type]
+    except KeyError:
+        if list_type == dict:
+            return write_list_of_maps(key, val)
 
     def string_handler(val):
         return '"{}"'.format(val)

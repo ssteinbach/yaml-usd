@@ -11,3 +11,10 @@ test_map:
     other_thing: [3, 5, 6]
     very_nested_map:
       name: "here"
+  child_stuff:
+    - test_float_thing: 1.5
+      other_thing: "hello"
+    - val_thin: 6
+      child:
+        stuff: "blarg"
+        stuff_two: "blarger"
