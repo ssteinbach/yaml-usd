@@ -93,6 +93,11 @@ def write_float(key, val):
     return FLOAT_TEMPLATE.format(key=key, val=val)
 
 
+@usda_dispatch_for(type(None))
+def write_noop(key, val):
+    return ""
+
+
 @usda_dispatch_for(str)
 def write_string(key, val):
     return STRING_TEMPLATE.format(key=key, val=val)
@@ -184,7 +189,7 @@ def main(files=None):
         print("Attempting to write: {}".format(outpath))
         with open(outpath, 'w') as fo:
             with open(fp) as fi:
-                data = yaml.load(fi.read())
+                data = yaml.load(fi.read(), yaml.Loader)
             fo.write(to_usda(data))
             print("Success.")
 

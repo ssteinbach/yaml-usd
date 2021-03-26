@@ -4,6 +4,19 @@ import unittest
 import usda_writer
 
 
+NONE_TEST = """#usda 1.0
+(
+    endFrame = 1
+    startFrame = 1
+)
+
+def Scope "root"
+{
+
+}
+"""
+
+
 class TestYaml(unittest.TestCase):
     def test_requires_dict(self):
         with self.assertRaises(ValueError):
@@ -26,6 +39,9 @@ class TestYaml(unittest.TestCase):
             'token test = "asdf"',
             usda_writer.to_usda({'test': "asdf"}),
         )
+
+    def test_none(self):
+        self.assertEqual(NONE_TEST, usda_writer.to_usda({'test': None}))
 
     def test_list(self):
         self.assertIn(
